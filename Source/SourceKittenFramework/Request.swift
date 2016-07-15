@@ -178,7 +178,7 @@ private func swiftStringFrom(bytes: UnsafePointer<Int8>, length: Int) -> String?
 /// Represents a SourceKit request.
 public enum Request {
     /// An `editor.open` request for the given File.
-    case EditorOpen(File)
+    case EditorOpen(file: File, arguments: [String])
     /// A `cursorinfo` request for an offset in the given file, using the `arguments` given.
     case CursorInfo(file: String, offset: Int64, arguments: [String])
     /// A custom request by passing in the sourcekitd_object_t directly.
@@ -200,18 +200,21 @@ public enum Request {
     private var sourcekitObject: sourcekitd_object_t {
         var dict: [sourcekitd_uid_t : sourcekitd_object_t]
         switch self {
-        case .EditorOpen(let file):
+        case .EditorOpen(let file, let arguments):
+            var compilerargs = arguments.map({ sourcekitd_request_string_create($0) })
             if let path = file.path {
                 dict = [
                     sourcekitd_uid_get_from_cstr("key.request"): sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.editor.open")),
                     sourcekitd_uid_get_from_cstr("key.name"): sourcekitd_request_string_create(path),
-                    sourcekitd_uid_get_from_cstr("key.sourcefile"): sourcekitd_request_string_create(path)
+                    sourcekitd_uid_get_from_cstr("key.sourcefile"): sourcekitd_request_string_create(path),
+                    sourcekitd_uid_get_from_cstr("key.compilerargs"): sourcekitd_request_array_create(&compilerargs, compilerargs.count)
                 ]
             } else {
                 dict = [
                     sourcekitd_uid_get_from_cstr("key.request"): sourcekitd_request_uid_create(sourcekitd_uid_get_from_cstr("source.request.editor.open")),
                     sourcekitd_uid_get_from_cstr("key.name"): sourcekitd_request_string_create(String(file.contents.hash)),
-                    sourcekitd_uid_get_from_cstr("key.sourcetext"): sourcekitd_request_string_create(file.contents)
+                    sourcekitd_uid_get_from_cstr("key.sourcetext"): sourcekitd_request_string_create(file.contents),
+                    sourcekitd_uid_get_from_cstr("key.compilerargs"): sourcekitd_request_array_create(&compilerargs, compilerargs.count)
                 ]
             }
         case .CursorInfo(let file, let offset, let arguments):

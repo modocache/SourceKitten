@@ -29,7 +29,7 @@ public struct SwiftDocs {
         do {
             self.init(
                 file: file,
-                dictionary: try Request.EditorOpen(file).failableSend(),
+                dictionary: try Request.EditorOpen(file: file, arguments: []).failableSend(),
                 cursorInfoRequest: Request.cursorInfoRequestForFilePath(file.path, arguments: arguments)
             )
         } catch let error as Request.Error {

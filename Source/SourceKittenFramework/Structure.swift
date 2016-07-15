@@ -25,12 +25,18 @@ public struct Structure {
     }
 
     /**
-    Initialize a Structure by passing in a File.
+    Initialize a Structure by passing in a File and compiler arguments.
 
     - parameter file: File to parse for structural information.
+    - parameter compilerargs: Compiler arguments to pass to SourceKit. This
+                              must be specified following the '--'. An empty
+                              string by default.
     */
-    public init(file: File) {
-        self.init(sourceKitResponse: Request.EditorOpen(file).send())
+    public init(file: File, compilerargs: String = "") {
+        let request = Request.EditorOpen(
+            file: file,
+            arguments: compilerargs.componentsSeparatedByString(" "))
+        self.init(sourceKitResponse: request.send())
     }
 }
 
